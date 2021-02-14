@@ -1,0 +1,9 @@
+name = "admin-ui"
+type = "webpack"
+account_id = "0e293947a1316ee94c2ed56222c135aa"
+zone_id = "bc931a569e26cecfab40f9c9f6259431"
+route = "admin.newnametech.com/*"
+
+[site]
+bucket = "./build"
+entry-point = "workers-site"
