@@ -4,9 +4,13 @@ import zipfile
 import requests
 import fire
 import os
+from io import BytesIO
 
 SEC_URL = 'https://www.sec.gov/data/foiadocsfailsdatahtm'
 SEC_OUTPUT = 'sec_data'
+
+FINRA_URL_BASE = 'http://regsho.finra.org/CNMSshvol{date_string}.txt'
+FINRA_OUTPUT = 'finra_data'
 
 class Patterns:
     sec_file = r'files.*\.zip'
@@ -88,6 +92,41 @@ def combine_sec_data(save=True):
 
 
 
+def download_finra_data(*years):
+    if not os.path.exists(FINRA_OUTPUT):
+        os.makedirs(FINRA_OUTPUT)
+
+    date_base = '{year}{month}{day}'
+    months = ['01', '02', '03', '04', '05', '06', '07',
+        '08', '09', '10', '11', '12']
+    for year in years:
+        for month in months:
+            dfs = []
+            fname = os.path.join(FINRA_OUTPUT, f'{year}{month}.csv')
+            for day in range(1, 32):
+                if day < 10:
+                    ds = f'0{day}' 
+                else:
+                    ds = f'{day}'
+
+                url = FINRA_URL_BASE.format(
+                    date_string=date_base.format(
+                        year=year,
+                        month=month,
+                        day=ds
+                    )
+                )
+                resp = requests.get(url)
+                if resp.status_code == 200:
+                    this_df = pd.read_csv(BytesIO(resp.content), delimiter='|')
+                    dfs.append(this_df)
+                else:
+                    print(f'No data found for {year}{month}{ds}!')
+            if not dfs:
+                continue
+            month_data = pd.concat(dfs)
+            month_data.to_csv(fname, index=False)
+            print(f'Data for {month}/{year} saved to {fname}')
 
     
     
